@@ -1,0 +1,69 @@
+# Load packages
+library(dplyr)
+library(broom)
+library(tidyr)
+library(xtable)
+
+#Read in the data
+data <- Final_Timesereies_fourQuarterChange
+
+#---------------------------------- Define your sectors and corresponding dependent variable names--------------------------
+
+sectors <- list(
+  "Food" = "change_4_log_Food_Non_Alcholic_Beverages",
+  "Furnishing" = "change_4_log_Furnishings_household_equipment",
+  "Clothing" = "change_4_log_Clothing_Footwear",
+  "Alcohol_Tobacco" = "change_4_log_Alcoholic_Beverages_Tobacco",
+  "Transport" = "change_4_log_Transport",
+  "Health" = "change_4_log_Health"
+)
+
+
+# -------------------------Define which lags to test per sector--------------------------------------
+sector_lags <- list(
+  "Food" = 0:3,
+  "Furnishing" = 0:3,
+  "Clothing" = 0:3,
+  "Alcohol_Tobacco" = 0:3,
+  "Transport" = 0:3,
+  "Health" = 7:9
+)
+
+# Initialize result list
+all_results <- list()
+
+# ----------------------Loop over sectors and lags---------------------------------------------------
+
+for (sector in names(sectors)) {
+  dep_var <- sectors[[sector]]
+  lags <- sector_lags[[sector]]
+  
+  for (lag_num in lags) {
+    formula <- as.formula(
+      paste0(dep_var, " ~ lag(change_4_log_Exchange_rate, ", lag_num, ")")
+    )
+    
+    model <- lm(formula, data = data)
+    tidy_mod <- broom::tidy(model)
+    r2 <- summary(model)$r.squared
+    
+    # Extract coefficient row for exchange rate
+    row <- tidy_mod[2, ]
+    
+    all_results[[length(all_results) + 1]] <- data.frame(
+      Sector = sector,
+      Lag = paste0("Lag_", lag_num),
+      Coefficient = round(row$estimate, 4),
+      Std_Error = round(row$std.error, 4),
+      p_value = round(row$p.value, 4),
+      Significance = ifelse(row$p.value < 0.01, "***",
+                            ifelse(row$p.value < 0.05, "**",
+                                   ifelse(row$p.value < 0.1, "*", ""))),
+      R_squared = round(r2, 4)
+    )
+  }
+}
+
+# Combine all results into a single data frame
+results_df <- do.call(rbind, all_results)
+results_df
