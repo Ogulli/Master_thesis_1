@@ -1,0 +1,19 @@
+
+# Read in data --> remove irrelevant variables i.e 'Date'
+
+data <- Final_Timesereies_fourQuarterChange
+
+# Function to run ADF tests for all variables in a dataset
+run_adf_tests <- function(data, max_lag = 3) {
+  results <- lapply(names(data)[names(data) != "Quarter"], function(var) {
+    cat("\n--- ADF Test for:", var, "---\n")
+    
+    # Loop through lags
+    for (lag in 1:max_lag) {
+      adf_result <- adf.test(na.omit(data[[var]]), k = lag)
+      cat("Lag:", lag, " | Test Statistic:", round(adf_result$statistic, 3), 
+          " | P-value:", round(adf_result$p.value, 3), "\n")
+    }
+  })
+}
+ 
