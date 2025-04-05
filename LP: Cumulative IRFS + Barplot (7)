@@ -1,7 +1,7 @@
 # Load necessary libraries
 library(ggplot2)
 library(dplyr)
-
+set.seed(123)
 # required data:
 # all lp_lin() functions from Local projection file
 
