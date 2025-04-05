@@ -2,7 +2,7 @@ library(fixest)
 library(tidyr)
 library(dplyr)
 library(modelsummary)
-
+set.seed(123)
 
 data_1 <- #  load in Log-Quarter- diffrenced data
 
@@ -19,7 +19,7 @@ Panel_data <- data_2 %>%
 
 
 # ---------------Arrange the dat to correctly lag the independent variable----------------
-data_2 <- Panel_data %>%
+Panel_data <- Panel_data %>%
   arrange(Sector, Date) %>%          #  1. arrange by both Sector and Date
   group_by(Sector) %>%               #  2. group by Sector
   mutate(ExchangeRate_lag1 = lag(Exchange_rate, 1))
@@ -30,7 +30,7 @@ data_2 <- Panel_data %>%
 model_3 <- feols(
   CPI ~ ExchangeRate_lag1:Sector | Sector,
   cluster = "Date",
-  data = data_2
+  data = Panel_data
 )
 
 modelsummary(model_3)
