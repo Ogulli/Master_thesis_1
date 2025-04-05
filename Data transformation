@@ -1,0 +1,24 @@
+# Read in Time series with Log-Quarterly data
+
+data <- Final_Timeseries_for_all_variables_in_log
+
+#---------------------------------function for  differencing quarters-----------------------------------------------------------
+calculate_k_period_change <- function(df, var_list, k) {
+  data %>%
+    mutate(across(all_of(var_list), 
+                  ~ . - lag(., k), 
+                  .names = "change_{k}_{.col}")) %>%                                                    
+    drop_na()
+}
+
+#-----------------------------------------------K-Quarter Change-------------------------------------------------------------------------
+data_1 <- data %>%
+  calculate_k_period_change(c("log_Exchange_rate", "log_Furnishings_household_equipment","log_Clothing_Footwear", "log_Food_Non_Alcholic_Beverages",
+                              "log_Alcoholic_Beverages_Tobacco", "log_Transport", "log_Health","log_Total_CPI_ATE", "log_CIF_ImportPrice"),4) # change the Number# to difference the timeseries for #-quarter change
+
+data_1 <- data_1 %>% 
+  select(-log_Exchange_rate,-log_Food_Non_Alcholic_Beverages, -log_Alcoholic_Beverages_Tobacco, -log_Clothing_Footwear, -log_Furnishings_household_equipment, 
+         -log_Transport, -log_Health, -log_Total_CPI_ATE, -log_CIF_ImportPrice) # CLEANING THE DATA
+
+
+
