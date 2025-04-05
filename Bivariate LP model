@@ -124,12 +124,60 @@ print(combined_plot)
 
 
 
+#---------------------------------- Cumulative ERPT----------------------------------------
+
+# Extract response values
+
+Food_Beverages_irfs <- Food_Beverages_lp$irf_lin_mean[2, ,1]
+Clothing_Footwear_irfs <- Clothing_Footwear_lp$irf_lin_mean[2, ,1]
+Furnishings_household_equipment_irfs<- Furnishings_household_equipment_lp$irf_lin_mean[2, ,1]
+Transport_lp <- Transport_lp$irf_lin_mean[2, ,1]
+Health_irfs <- Health_lp$irf_lin_mean[2, ,1]
+Alcoholic_Beverages_Tobacco_lp <- Alcoholic_Beverages_Tobacco_lp$irf_lin_mean[2, ,1]
+
+
+#------------------- Create an empty Data.frame -> Instert irfs------------------
+
+ Create a long-format data frame for IRFs over horizon 0-8
+cumulative_irf <- data.frame(
+  Sector = rep(c(
+    "Food_Beverages",
+    "Clothing_Footwear",
+    "Furnishings_household_equipment",
+    "Transport",
+    "Health",
+    "Alcoholic_Beverages_Tobacco"
+  ), each = 9),
+  Horizon = rep(0:8, times = 6),
+  Response = c(
+    Food_Beverages_irfs,
+    Clothing_Footwear_irfs,
+    Furnishings_household_equipment_irfs,
+    Transport_irfs,
+    Health_irfs,
+    Alcoholic_Beverages_Tobacco_irfs
+  )
+)
+
+# Convert to wide format with one row per sector and each horizon as a column
+cumulative_irf <- cumulative_irf %>%
+  pivot_wider(names_from = Horizon, values_from = Response) %>%
+  rowwise() %>%
+  mutate(Cumulative_ERPT = sum(c_across(`0`:`8`), na.rm = TRUE))
 
 
 
+print(cumulative_irf)
 
+# irs contains 9 responses, while lp_lin only shows horizon H1 to H8
+# to remove the 1st irfs:
 
-
+Food_Beverages_irfs <- Food_Beverages_irfs[-1]
+Clothing_Footwear_irfs <- Clothing_Footwear_irfs[-1]
+Furnishings_household_equipment_irfs <- Furnishings_household_equipment_irfs[-1]
+Alcoholic_Beverages_Tobacco_irfs <- Alcoholic_Beverages_Tobacco_irfs[-1]
+Transport_irfs <- Transport_irfs[-1]
+Health_irfs <- Health_irfs[-1]
 
 
 
