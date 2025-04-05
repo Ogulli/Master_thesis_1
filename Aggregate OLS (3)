@@ -1,10 +1,10 @@
 
 # ------------------------AGGREGATE DATA REGRESSION-----------------------------------
-# read in the data
+library(tidyverse)
+library(modelsummary)
 
-data_1 <- #data
+# --Maker sure Log-Quarter-Differenced data_1 is loaded in--
 
-data_1 <- Final_Timesereies_fourQuarterChange
 
 # --------------------Simple OLS, baseline model for First-stage ERPT----------------
 
@@ -19,4 +19,7 @@ Model_2<- lm(change_4_log_Total_CPI_ATE ~ change_4_log_CIF_ImportPrice +
               lag(change_4_log_CIF_ImportPrice,4), data = data_1)
 
 summary(Model_2)
+
+modelsummary(Model_1)
+modelsummary(Model_2)
 
