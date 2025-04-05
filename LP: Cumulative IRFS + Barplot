@@ -1,0 +1,125 @@
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+
+# required data:
+# all lp_lin() functions from Local projection file
+
+# Extract IRFs for each sector
+Food_Beverages_irfs <- Food_Beverages_lp$irf_lin_mean[2, ,1]
+Clothing_Footwear_irfs <- Clothing_Footwear_lp$irf_lin_mean[2, ,1]
+Furnishings_household_equipment_irfs <- Furnishings_household_equipment_lp$irf_lin_mean[2, ,1]
+Transport_irfs <- Transport_lp$irf_lin_mean[2, ,1]
+Health_irfs <- Health_lp$irf_lin_mean[2, ,1]
+Alcoholic_Beverages_Tobacco_irfs <- Alcoholic_Beverages_Tobacco_lp$irf_lin_mean[2, ,1]
+
+
+Food_Beverages_irfs <- Food_Beverages_irfs[-1]
+Clothing_Footwear_irfs <- Clothing_Footwear_irfs[-1]
+Furnishings_household_equipment_irfs <- Furnishings_household_equipment_irfs[-1]
+Alcoholic_Beverages_Tobacco_irfs <- Alcoholic_Beverages_Tobacco_irfs[-1]
+Transport_irfs <- Transport_irfs[-1]
+Health_irfs <- Health_irfs[-1]
+
+
+
+# Combine the IRFs into a single data frame
+sectors <- c("Food and Beverages", "Clothing and Footwear", "Furnishing and Household Equipment", "Alcohol and Tobacco", "Transport", "Health")
+
+# Create data frame for plotting
+cumulative_irfs <- data.frame(
+  Sector = rep(sectors, each = 8),
+  Horizon = rep(1:8, times = 6),
+  Cumulative_Effect = c(Food_Beverages_irfs, Clothing_Footwear_irfs, 
+                        Furnishings_household_equipment_irfs, 
+                        Alcoholic_Beverages_Tobacco_irfs, 
+                        Transport_irfs, Health_irfs)
+)
+#------------------------Extract P-Values---------------------------------------
+# Define a function to extract p-values from a given LP model summary
+extract_pvalues <- function(lp_model, shock_name) {
+  sapply(1:8, function(i) {
+    # Construct the row name dynamically based on the horizon number
+    row_name <- paste0("h", i, ":", shock_name)
+    # Access the p-value using the row name and the correct column name with a leading space
+    summary(lp_model)$`Shock: ExchangeRate`[[i]][row_name, " p-value"]
+  })
+}
+
+# Extract p-values for each sector using the function
+Food_Beverages_pvalues <- extract_pvalues(Food_Beverages_lp, "ExchangeRate")
+Clothing_Footwear_pvalues <- extract_pvalues(Clothing_Footwear_lp, "ExchangeRate")
+Furnishings_household_equipment_pvalues <- extract_pvalues(Furnishings_household_equipment_lp, "ExchangeRate")
+Alcoholic_Beverages_Tobacco_pvalues <- extract_pvalues(Alcoholic_Beverages_Tobacco_lp, "ExchangeRate")
+Transport_pvalues <- extract_pvalues(Transport_lp, "ExchangeRate")
+Health_pvalues <- extract_pvalues(Health_lp, "ExchangeRate")
+
+
+
+
+p_values <- c(Food_Beverages_pvalues, Clothing_Footwear_pvalues, 
+              Furnishings_household_equipment_pvalues, 
+              Alcoholic_Beverages_Tobacco_pvalues, 
+              Transport_pvalues, Health_pvalues)
+
+#-----------------------------------------------------------------------
+# Combine IRF vectors for all sectors
+irfs <- c(Food_Beverages_irfs, Clothing_Footwear_irfs, 
+          Furnishings_household_equipment_irfs, 
+          Alcoholic_Beverages_Tobacco_irfs, 
+          Transport_irfs, Health_irfs)
+
+
+# Define the sector names
+sectors <- c("Food and Beverages", "Clothing and Footwear", 
+             "Furnishing and Household Equipment", 
+             "Alcohol and Tobacco", "Transport", "Health")
+
+# Create the data frame with cumulative effects and p-values
+cumulative_irfs <- data.frame(
+  Sector = rep(sectors, each = 8),         # Each sector has 8 horizons
+  Horizon = rep(1:8, times = 6),           # Horizons from 1 to 8
+  Cumulative_Effect = irfs,                # IRF values
+  P_Value = unlist(p_values)               # P-values
+)
+
+# Add a column for significance based on p-value
+cumulative_irfs$Significant <- ifelse(cumulative_irfs$P_Value < 0.05, TRUE, FALSE)
+
+# Print to verify the data frame
+print(cumulative_irfs)
+
+
+#------------------------------------------------------------------------------
+# Enhanced academic bar plot for thesis
+barplot <- ggplot(cumulative_irfs, aes(x = factor(Horizon), y = Cumulative_Effect, fill = Significant)) +
+  geom_bar(stat = "identity", position = "dodge", color = "black", width = 0.7) +
+  facet_wrap(~Sector, ncol = 3) +  # Arrange in a 2x3 grid
+  scale_fill_manual(values = c("darkgray", "black"), labels = c("Not Significant", "Significant")) +
+  theme_classic(base_size = 18) +  # Classic theme for a clean look
+  labs(
+    title = "Cumulative Effect of Exchange Rate Shock on Different Sectors",
+    x = "Horizon (Quarters)",
+    y = "Cumulative Effect (Log-transformed)",
+    fill = "Significance",
+    caption = "Note: Values are log-transformed and calculated as a 4-quarter change, with a lag of 4 included."
+  ) +
+  theme(
+    plot.title = element_text(size = 22, face = "bold", hjust = 0.5, margin = margin(b = 10)),
+    axis.title = element_text(size = 18, face = "bold"),
+    axis.text = element_text(size = 14),
+    legend.position = "top",  # Move legend to the top for better visibility
+    legend.title = element_text(size = 16, face = "bold"),
+    legend.text = element_text(size = 14),
+    strip.text = element_text(size = 18, face = "bold"),  # Sector titles
+    panel.border = element_rect(color = "black", fill = NA, size = 1.2),  # Clear borders
+    panel.grid = element_blank(),  # No gridlines for a clean academic look
+    axis.line = element_line(size = 1, color = "black")  # Bold axis lines
+  ) +
+  geom_hline(yintercept = 0, linetype = "solid", color = "black", linewidth = 0.8)  # Solid reference line at y = 0
+
+# Display the plot
+print(barplot)
+
+# Save the enhanced academic plot
+ggsave("Thesis_Sectoral_IRF_Bar_Plot_Academic.png", plot = barplot, width 
