@@ -1,32 +1,39 @@
-# Read in the Log-Quarter differenced data
+library(lpirfs)
+library(ggpubr)
+
+
+set.seed(123)
+
+
+# Read in the Log-Quarter differenced data #data_1
 
 #------------------------Creating data frames for Bivariate LP---------------------------------
 
 
-Food_Beverages <- Final_Timesereies_fourQuarterChange %>% 
+Food_Beverages <- data_1 %>% 
   select(change_4_log_Exchange_rate, change_4_log_Food_Non_Alcholic_Beverages) %>% 
   rename(ExchangeRate = change_4_log_Exchange_rate, Food_Beverages = change_4_log_Food_Non_Alcholic_Beverages)
 #---------------------------------------------------------------------------------------------------------------
 
-Clothing_Footwear <- Final_Timesereies_fourQuarterChange %>% 
+Clothing_Footwear <- data_1 %>% 
   select(change_4_log_Exchange_rate, change_4_log_Clothing_Footwear) %>% 
   rename(ExchangeRate = change_4_log_Exchange_rate, Clothing_Footwear = change_4_log_Clothing_Footwear)
 #---------------------------------------------------------------------------------------------------------------
 
-Furnishings_household_equipment <- Final_Timesereies_fourQuarterChange %>% 
+Furnishings_household_equipment <- data_1 %>% 
   select(change_4_log_Exchange_rate, change_4_log_Furnishings_household_equipment) %>% 
   rename(ExchangeRate = change_4_log_Exchange_rate, Furnishings_household_equipment = change_4_log_Furnishings_household_equipment)
 #-----------------------------------------------------------------------------------------------------------------
-Alcoholic_Beverages_Tobacco <- Final_Timesereies_fourQuarterChange %>% 
+Alcoholic_Beverages_Tobacco <- data_1 %>% 
   select(change_4_log_Exchange_rate, change_4_log_Alcoholic_Beverages_Tobacco) %>% 
   rename(ExchangeRate = change_4_log_Exchange_rate, Alcoholic_Beverages_Tobacco = change_4_log_Alcoholic_Beverages_Tobacco)
 #------------------------------------------------------------------------------------------------------------------
 
-Transport <- Final_Timesereies_fourQuarterChange %>% 
+Transport <- data_1 %>% 
   select(change_4_log_Exchange_rate, change_4_log_Transport) %>% 
   rename(ExchangeRate = change_4_log_Exchange_rate, Transport = change_4_log_Transport)
 #-----------------------------------------------------------------------------------------------------------------
-Health <- Final_Timesereies_fourQuarterChange %>% 
+Health <- data_1 %>% 
   select(change_4_log_Exchange_rate, change_4_log_Health) %>% 
   rename(ExchangeRate = change_4_log_Exchange_rate, Health = change_4_log_Health)
 
@@ -131,14 +138,14 @@ print(combined_plot)
 Food_Beverages_irfs <- Food_Beverages_lp$irf_lin_mean[2, ,1]
 Clothing_Footwear_irfs <- Clothing_Footwear_lp$irf_lin_mean[2, ,1]
 Furnishings_household_equipment_irfs<- Furnishings_household_equipment_lp$irf_lin_mean[2, ,1]
-Transport_lp <- Transport_lp$irf_lin_mean[2, ,1]
+Transport_irfs <- Transport_lp$irf_lin_mean[2, ,1]
 Health_irfs <- Health_lp$irf_lin_mean[2, ,1]
-Alcoholic_Beverages_Tobacco_lp <- Alcoholic_Beverages_Tobacco_lp$irf_lin_mean[2, ,1]
+Alcoholic_Beverages_Tobacco_irfs <- Alcoholic_Beverages_Tobacco_lp$irf_lin_mean[2, ,1]
 
 
 #------------------- Create an empty Data.frame -> Instert irfs------------------
 
- Create a long-format data frame for IRFs over horizon 0-8
+ #Create a long-format data frame for IRFs over horizon 0-8
 cumulative_irf <- data.frame(
   Sector = rep(c(
     "Food_Beverages",
@@ -169,8 +176,8 @@ cumulative_irf <- cumulative_irf %>%
 
 print(cumulative_irf)
 
-# irs contains 9 responses, while lp_lin only shows horizon H1 to H8
-# to remove the 1st irfs:
+# IRFS contains 9 responses, while lp_lin only shows horizon H1 to H8
+# to remove the 1st irfs accounitng for the Immediate response within the same quarter as the Shock occurs:
 
 Food_Beverages_irfs <- Food_Beverages_irfs[-1]
 Clothing_Footwear_irfs <- Clothing_Footwear_irfs[-1]
@@ -180,7 +187,34 @@ Transport_irfs <- Transport_irfs[-1]
 Health_irfs <- Health_irfs[-1]
 
 
+cumulative_irf <- data.frame(
+  Sector = rep(c(
+    "Food_Beverages",
+    "Clothing_Footwear",
+    "Furnishings_household_equipment",
+    "Transport",
+    "Health",
+    "Alcoholic_Beverages_Tobacco"
+  ), each = 8),
+  Horizon = rep(1:8, times = 6),
+  Response = c(
+    Food_Beverages_irfs,
+    Clothing_Footwear_irfs,
+    Furnishings_household_equipment_irfs,
+    Transport_irfs,
+    Health_irfs,
+    Alcoholic_Beverages_Tobacco_irfs
+  )
+)
 
+# Convert to wide format with one row per sector and each horizon as a column
+cumulative_irf <- cumulative_irf %>%
+  pivot_wider(names_from = Horizon, values_from = Response) %>%
+  rowwise() %>%
+  mutate(Cumulative_ERPT = sum(c_across(`1`:`8`), na.rm = TRUE))
+
+
+print(cumulative_irf)
 
 
 
