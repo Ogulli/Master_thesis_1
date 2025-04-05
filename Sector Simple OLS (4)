@@ -3,9 +3,9 @@ library(dplyr)
 library(broom)
 library(tidyr)
 library(xtable)
-
+set.seed(123)
 #Read in the data
-data <- Final_Timesereies_fourQuarterChange
+#Make sure Log-Differenced data is loaded in 'data_1'
 
 #---------------------------------- Define your sectors and corresponding dependent variable names--------------------------
 
