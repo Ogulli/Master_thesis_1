@@ -1,0 +1,22 @@
+
+# ------------------------AGGREGATE DATA REGRESSION-----------------------------------
+# read in the data
+
+data_1 <- #data
+
+data_1 <- Final_Timesereies_fourQuarterChange
+
+# --------------------Simple OLS, baseline model for First-stage ERPT----------------
+
+Model_1 <- lm(change_4_log_CIF_ImportPrice ~ change_4_log_Exchange_rate, data = data_1 )
+summary(Model_1)
+
+
+#------------- Second-stage ERPT, including lagged-varible---------------------
+
+Model_2<- lm(change_4_log_Total_CPI_ATE ~ change_4_log_CIF_ImportPrice +
+              lag(change_4_log_CIF_ImportPrice, 2) + 
+              lag(change_4_log_CIF_ImportPrice,4), data = data_1)
+
+summary(Model_2)
+
