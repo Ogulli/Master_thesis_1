@@ -1,0 +1,149 @@
+# Read in the Log-Quarter differenced data
+
+#------------------------Creating data frames for Bivariate LP---------------------------------
+
+
+Food_Beverages <- Final_Timesereies_fourQuarterChange %>% 
+  select(change_4_log_Exchange_rate, change_4_log_Food_Non_Alcholic_Beverages) %>% 
+  rename(ExchangeRate = change_4_log_Exchange_rate, Food_Beverages = change_4_log_Food_Non_Alcholic_Beverages)
+#---------------------------------------------------------------------------------------------------------------
+
+Clothing_Footwear <- Final_Timesereies_fourQuarterChange %>% 
+  select(change_4_log_Exchange_rate, change_4_log_Clothing_Footwear) %>% 
+  rename(ExchangeRate = change_4_log_Exchange_rate, Clothing_Footwear = change_4_log_Clothing_Footwear)
+#---------------------------------------------------------------------------------------------------------------
+
+Furnishings_household_equipment <- Final_Timesereies_fourQuarterChange %>% 
+  select(change_4_log_Exchange_rate, change_4_log_Furnishings_household_equipment) %>% 
+  rename(ExchangeRate = change_4_log_Exchange_rate, Furnishings_household_equipment = change_4_log_Furnishings_household_equipment)
+#-----------------------------------------------------------------------------------------------------------------
+Alcoholic_Beverages_Tobacco <- Final_Timesereies_fourQuarterChange %>% 
+  select(change_4_log_Exchange_rate, change_4_log_Alcoholic_Beverages_Tobacco) %>% 
+  rename(ExchangeRate = change_4_log_Exchange_rate, Alcoholic_Beverages_Tobacco = change_4_log_Alcoholic_Beverages_Tobacco)
+#------------------------------------------------------------------------------------------------------------------
+
+Transport <- Final_Timesereies_fourQuarterChange %>% 
+  select(change_4_log_Exchange_rate, change_4_log_Transport) %>% 
+  rename(ExchangeRate = change_4_log_Exchange_rate, Transport = change_4_log_Transport)
+#-----------------------------------------------------------------------------------------------------------------
+Health <- Final_Timesereies_fourQuarterChange %>% 
+  select(change_4_log_Exchange_rate, change_4_log_Health) %>% 
+  rename(ExchangeRate = change_4_log_Exchange_rate, Health = change_4_log_Health)
+
+
+
+# ----------------------------Local projection function for each sector----------------------------------------------
+
+Food_Beverages_lp <- lp_lin(Food_Beverages, 
+                            lags_endog_lin = 4, 
+                            trend = 0, 
+                            shock_type = 1, 
+                            confint = 1.96, 
+                            hor = 8)
+
+Clothing_Footwear_lp <- lp_lin(Clothing_Footwear, 
+                               lags_endog_lin = 4, 
+                               trend = 0, 
+                               shock_type = 1, 
+                               confint = 1.96, 
+                               hor = 8)
+
+Furnishings_household_equipment_lp <- lp_lin(Furnishings_household_equipment, 
+                                             lags_endog_lin = 4, 
+                                             trend = 0, 
+                                             shock_type = 1, 
+                                             confint = 1.96, 
+                                             hor = 8)
+Alcoholic_Beverages_Tobacco_lp <- lp_lin(Alcoholic_Beverages_Tobacco, 
+                                         lags_endog_lin = 4, 
+                                         trend = 0, 
+                                         shock_type = 1, 
+                                         confint = 1.96, 
+                                         hor = 8)
+Transport_lp <- lp_lin(Transport,
+  lags_endog_lin = 4,
+  trend = 0, 
+  shock_type = 1, 
+  confint = 1.96, 
+  hor = 8)
+
+Health_lp <- lp_lin(Health, 
+                    lags_endog_lin = 4, 
+                    trend = 0, 
+                    shock_type = 1, 
+                    confint = 1.96, 
+                    hor = 8)
+#-----------------------------------------------------------------------------------------------------
+# -----------------------------Creating Plots using plot_lin()---------------------------------------
+
+Food_Beverages_plot <- plot_lin(Food_Beverages_lp)
+Clothing_Footwear_plot <- plot_lin(Clothing_Footwear_lp)
+Furnishings_household_equipment_plot <- plot_lin(Furnishings_household_equipment_lp)
+Alcoholic_Beverages_Tobacco_plot <- plot_lin(Alcoholic_Beverages_Tobacco_lp)
+Transport_plot <- plot_lin(Transport_lp)
+Health_plot <- plot_lin(Health_lp)
+#------------------------Selecting which plots to use-----------------------
+
+selected_plots <- list(Food_Beverages_plot[[3]],
+                       Clothing_Footwear_plot[[3]],
+                       Furnishings_household_equipment_plot[[3]],
+                       Alcoholic_Beverages_Tobacco_plot[[3]],
+                       Transport_plot[[3]],
+                       Health_plot[[3]])
+
+# -----------------------------Visualize the plots in a 2x3 Grid--------------------------------------
+
+selected_plots <- lapply(seq_along(selected_plots), function(i) {
+  plot <- selected_plots[[i]]
+  plot + 
+    theme_classic(base_size = 15) + 
+    theme(
+      plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
+      axis.title = element_text(size = 12, face = "bold"), # Bold axis title
+      axis.text = element_text(size = 12, face = "bold"),  # Bold axis text
+      legend.text = element_text(size = 12),
+      panel.grid = element_blank(),  # Remove background grid
+      axis.line = element_line(size = 1, color = "black") # Add axis lines
+    ) +
+    geom_line(linewidth = 2) +  # Thicker line for better clarity
+    xlab("Horizon") +
+    ylab("Response") +
+    ggtitle(c("Food and Beverages", "Clothing and Footwear", "Furnishing and Household Equipment", "Alcohol and Tobacco", "Transport", "Health")[i])
+})
+
+# ----------------2x3 Grid--------------------
+combined_plot <- ggarrange(
+  plotlist = selected_plots, 
+  ncol = 3, 
+  nrow = 2, 
+  align = "hv"
+)
+
+# Display the combined plot
+print(combined_plot)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
