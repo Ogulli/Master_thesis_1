@@ -1,0 +1,38 @@
+library(fixest)
+library(tidyr)
+library(dplyr)
+library(modelsummary)
+
+
+data_1 <- #  load in Log-Quarter- diffrenced data
+
+data_2 <- data_1 %>% 
+  select(-change_4_log_Total_CPI_ATE, -change_4_log_CIF_ImportPrice) # Remove unnessecary variables
+
+# ----------------------------- Create Panel Data-------------------------
+Panel_data <- data_2 %>%
+  pivot_longer(cols = -c(Date, change_4_log_Exchange_rate), 
+               names_to = "Sector", 
+               values_to = "CPI") %>%
+  mutate(Sector = gsub("change_4_log_","", Sector)) %>%  
+  rename("Exchange_rate" = change_4_log_Exchange_rate) # Remove "log_" prefix for clarity
+
+
+# ---------------Arrange the dat to correctly lag the independent variable----------------
+data_2 <- Panel_data %>%
+  arrange(Sector, Date) %>%          #  1. arrange by both Sector and Date
+  group_by(Sector) %>%               #  2. group by Sector
+  mutate(ExchangeRate_lag1 = lag(Exchange_rate, 1))
+  
+
+
+#-------------------------Panel data regression- Within-Estimation with sector fixed effects, cluster by Date---------------------------
+model_3 <- feols(
+  CPI ~ ExchangeRate_lag1:Sector | Sector,
+  cluster = "Date",
+  data = data_2
+)
+
+modelsummary(model_3)
+
+
