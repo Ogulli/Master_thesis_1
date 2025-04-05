@@ -1,19 +1,163 @@
+# Tor run any of these three tests, import the differenced data set from 'Data transformation'
+# And call it data_1
 
-# Read in data --> remove irrelevant variables i.e 'Date'
 
-data <- Final_Timesereies_fourQuarterChange
-
+# ----------------------------ADF.Test No-Trend ------------------------------------------
 # Function to run ADF tests for all variables in a dataset
-run_adf_tests <- function(data, max_lag = 3) {
-  results <- lapply(names(data)[names(data) != "Quarter"], function(var) {
-    cat("\n--- ADF Test for:", var, "---\n")
-    
-    # Loop through lags
-    for (lag in 1:max_lag) {
-      adf_result <- adf.test(na.omit(data[[var]]), k = lag)
-      cat("Lag:", lag, " | Test Statistic:", round(adf_result$statistic, 3), 
-          " | P-value:", round(adf_result$p.value, 3), "\n")
+
+# Load necessary package
+library(tseries)
+
+# Remove the Date variable from the data
+data_1 <- data_1[, !(names(data_1) %in% c("Date"))]
+
+# Create an empty data frame to store results
+adf_results <- data.frame(Variable = character(), Lag = integer(), 
+                          Test_Statistic = numeric(), P_Value = numeric(),
+                          stringsAsFactors = FALSE)
+
+# Define the ADF test function
+run_adf_tests <- function(data_1, max_lag = 3) {
+  for (var in names(data_1)) {
+    for (lag in 1:max_lag) {  #--To change lags, edit 'max_lag' and #:max_lag--
+      # Perform the ADF test and store the results
+      adf_result <- adf.test(na.omit(data_1[[var]]), k = lag)
+      
+      # Append the result to the data frame
+      adf_results <<- rbind(adf_results, data.frame(
+        Variable = var,
+        Lag = lag,
+        Test_Statistic = round(adf_result$statistic, 3),
+        P_Value = round(adf_result$p.value, 3)
+      ))
     }
-  })
+  }
 }
- 
+
+# Run the ADF tests
+run_adf_tests(data_1)
+
+# Display the results
+print(adf_results)
+
+
+
+#-----------------------------using urca-package to include Trend---------------------------------
+# Based on the assumption that macro variables follow a Stochastic Trend
+
+
+# Load necessary package
+library(urca)
+
+# Remove the Date variable from the data
+data_1 <- data_1[, !(names(data_1) %in% c("Date"))]
+
+# Create an empty data frame to store results
+adf_results <- data.frame(Variable = character(), Lag = integer(), 
+                          Test_Statistic = numeric(), Critical_Value_5 = numeric(),
+                          Stationarity = character(), stringsAsFactors = FALSE)
+
+# Define the ADF test function with trend
+run_adf_tests <- function(data_1, max_lag = 3) {
+  for (var in names(data_1)) {
+    for (lag in 1:max_lag) {
+      # Perform the ADF test with trend
+      adf_result <- ur.df(na.omit(data_1[[var]]), type = "trend", lags = lag)
+      
+      # Extract the test statistic and critical value for 5%
+      test_stat <- adf_result@teststat[1] 
+      crit_value_5 <- adf_result@cval[1, 2] # Critical value at 5% significance level
+      
+      # Determine stationarity based on critical value comparison
+      stationarity <- ifelse(test_stat < crit_value_5, "Stationary", "Non-Stationary")
+      
+      # Append the result to the data frame
+      adf_results <<- rbind(adf_results, data.frame(
+        Variable = var,
+        Lag = lag,
+        Test_Statistic = round(test_stat, 3),
+        Critical_Value_5 = round(crit_value_5, 3),
+        Stationarity = stationarity
+      ))
+    }
+  }
+}
+
+# Run the ADF tests
+run_adf_tests(data_1)
+
+# Display the results
+print(adf_results)
+
+
+
+#---------------------------------ADF.Test using 'AIC' to select best lags--------------------------------------
+# Remove the Date variable from the data
+data_1 <- data_1[, !(names(data_1) %in% c("Date"))]
+
+#  empty data frame to store results
+adf_results <- data.frame(Variable = character(), Optimal_Lag = integer(), 
+                          Test_Statistic = numeric(), Critical_Value_5 = numeric(),
+                          Stationarity = character(), AIC = numeric(), stringsAsFactors = FALSE)
+
+# Defining the ADF test function with AIC-based lag selection
+run_adf_tests <- function(data_1, max_lag = 10) {
+  for (var in names(data_1)) {
+    best_aic <- Inf
+    optimal_lag <- 0
+    best_stat <- NA
+    best_crit_value <- NA
+    best_stationarity <- NA
+    
+    # Loop through lags to find the best AIC
+    for (lag in 0:max_lag) {
+      adf_result <- ur.df(na.omit(data_1[[var]]), type = "trend", lags = lag)
+      
+      # Calculate residual variance and AIC manually
+      residuals <- residuals(adf_result@testreg)
+      n <- length(residuals)
+      k <- lag + 2  # Number of parameters: intercept, trend, and lags
+      sigma2 <- sum(residuals^2) / n
+      aic_value <- n * log(sigma2) + 2 * k
+      
+      # Update optimal lag based on lowest AIC
+      if (!is.na(aic_value) && aic_value < best_aic) {
+        best_aic <- aic_value
+        optimal_lag <- lag
+        test_stat <- adf_result@teststat[1]
+        crit_value_5 <- adf_result@cval[1, 2]
+        stationarity <- ifelse(test_stat < crit_value_5, "Stationary", "Non-Stationary")
+      }
+    }
+    
+    # Append the best result to the data frame
+    adf_results <<- rbind(adf_results, data.frame(
+      Variable = var,
+      Optimal_Lag = optimal_lag,
+      Test_Statistic = round(test_stat, 3),
+      Critical_Value_5 = round(crit_value_5, 3),
+      Stationarity = stationarity,
+      AIC = round(best_aic, 3)
+    ))
+  }
+}
+
+# Run the ADF tests with optimal lag
+run_adf_tests(data_1)
+
+# Display the results
+print(adf_results)
+
+# When including 'AIC' for best lag-selection it will favour modelfit over signigicance
+# Found best stationarity with 'AIC' when using Log-3-Quarter differencing, with only 'Healt' being non-stationary
+
+
+
+
+
+
+
+
+
+
+
