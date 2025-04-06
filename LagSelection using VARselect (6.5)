@@ -1,4 +1,4 @@
-# --------------Make sure data from Bivarate LP is loaded in----------------------
+# --------------Make sure data from Bivarate LP is loaded in from (6)----------------------
 # We exclude the shock variable from the Data and include it as a Exogenous variable, assumuing no feedback effects in a small open economy
 
 library(vars)
