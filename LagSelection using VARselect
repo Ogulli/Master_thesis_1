@@ -1,0 +1,55 @@
+# --------------Make sure data from Bivarate LP is loaded in----------------------
+# We exclude the shock variable from the Data and include it as a Exogenous variable, assumuing no feedback effects in a small open economy
+
+library(vars)
+
+set.seed(123)
+# Select the best lag
+
+ExchangeRate <- data.frame(Food_Beverages$ExchangeRate) # Exogenous variable
+                                                        # Equal for all Sectors
+
+
+Food_Beverages_1 <- Food_Beverages %>% 
+  dplyr::select(-ExchangeRate)
+
+Clothing_Footwear_1 <- Clothing_Footwear %>% 
+  dplyr::select(-ExchangeRate)
+
+Furnishings_household_equipment_1 <- Furnishings_household_equipment %>% 
+  dplyr::select(-ExchangeRate)
+
+Alcoholic_Beverages_Tobacco_1 <-  Alcoholic_Beverages_Tobacco %>% 
+  dplyr::select(-ExchangeRate)
+
+Transport_1 <-  Transport %>% 
+  dplyr::select(-ExchangeRate)
+
+Health_1 <- Health %>% 
+  dplyr::select(-ExchangeRate)
+
+
+
+Lag_Food <- VARselect(Food_Beverages_1, lag.max = 10, type = "const", 
+                 exogen = ExchangeRate)
+Lag_Clothing <- VARselect(Clothing_Footwear_1, lag.max = 10, type = "const", 
+                      exogen = ExchangeRate)
+Lag_Furnishing <- VARselect(Furnishings_household_equipment_1, lag.max = 10, type = "const", 
+                          exogen = ExchangeRate)
+Lag_Alcohol <- VARselect(Furnishings_household_equipment_1, lag.max = 10, type = "const", 
+                        exogen = ExchangeRate)
+Lag_Transport <- VARselect(Transport_1, lag.max = 10, type = "const", 
+                         exogen = ExchangeRate)
+Lag_Health <- VARselect(Health_1, lag.max = 10, type = "const", 
+                        exogen = ExchangeRate)
+
+
+# Print the optimal lag for each sector
+cat("\nOptimal lags:")
+print(Lag_Food$selection)
+print(Lag_Clothing$selection)
+print(Lag_Furnishing$selection)
+print(Lag_Alcohol$selection)
+print(Lag_Transport$selection)
+print(Lag_Health$selection)
+
