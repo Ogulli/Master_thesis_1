@@ -1,12 +1,13 @@
-# Tor run any of these three tests, import the differenced data set from 'Data transformation'
+library(tseries)
+# To run any of these three tests, import the differenced data set from 'Data transformation'
 # And call it data_1
 
 
 # ----------------------------ADF.Test No-Trend ------------------------------------------
 # Function to run ADF tests for all variables in a dataset
 
-# Load necessary package
-library(tseries)
+#Load necessary package
+
 
 # Remove the Date variable from the data
 data_1 <- data_1[, !(names(data_1) %in% c("Date"))]
